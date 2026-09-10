@@ -1,111 +1,185 @@
-# **PDF RAG Assistant (Chatbot hỏi đáp tài liệu)**
+# PDF RAG Agent
 
-Dự án này xây dựng một chatbot hỏi đáp tài liệu PDF bằng tiếng Việt dựa trên kiến trúc **Retrieval-Augmented Generation (RAG)**. Hệ thống cho phép người dùng upload file PDF và đặt câu hỏi trực tiếp về nội dung tài liệu, chatbot sẽ truy xuất thông tin liên quan và sinh câu trả lời chính xác dựa trên nội dung đó.
+Ứng dụng hỏi đáp tài liệu PDF bằng tiếng Việt, kết hợp Retrieval-Augmented
+Generation (RAG) với một agent LangGraph. Agent phân loại từng câu hỏi để quyết
+định truy xuất tài liệu hoặc trả lời trực tiếp.
 
-## **Kiến trúc RAG Pipeline**
+## Luồng xử lý
 
+```text
+PDF → PyPDFLoader → SemanticChunker → Embeddings → Chroma → Retriever
+
+Question → Classify
+             ├── cần tài liệu → Retrieve → RAG prompt → Vicuna → Answer
+             └── không cần    → Direct prompt ───────→ Vicuna → Answer
 ```
-PDF → PyPDFLoader → SemanticChunker → Chroma Vector DB → Retriever
-                                                              ↓
-User Question → RAG Chain (Retriever + Prompt + LLM) → Answer
-```
 
-1. **Đọc PDF**: Sử dụng `PyPDFLoader` để trích xuất văn bản từ file PDF
-2. **Semantic Chunking**: Chia tài liệu thành các phần theo ngữ nghĩa (không cắt theo độ dài cố định)
-3. **Vector Embedding**: Chuyển các chunks thành vector sử dụng `vietnamese-bi-encoder`
-4. **Vector Database**: Lưu trữ embeddings vào ChromaDB
-5. **RAG Chain**: Kết hợp Retriever + Prompt Template + LLM để sinh câu trả lời
+- Embedding: `bkai-foundation-models/vietnamese-bi-encoder`
+- LLM: `lmsys/vicuna-7b-v1.5`
+- Vector store: Chroma
+- Orchestration: LangGraph
+- Giao diện: Streamlit
+- GPU inference: quantization 4-bit bằng bitsandbytes
 
-## **Công nghệ sử dụng**
+## Yêu cầu
 
-| Công nghệ | Mục đích |
-|---|---|
-| **LangChain** | Xây dựng pipeline RAG |
-| **ChromaDB** | Lưu trữ vector embeddings |
-| **HuggingFace Embeddings** | `bkai-foundation-models/vietnamese-bi-encoder` |
-| **Vicuna 7B v1.5** | LLM sinh câu trả lời (quantization 4-bit) |
-| **Semantic Chunking** | Chia tài liệu theo ngữ nghĩa |
-| **Streamlit** | Xây dựng giao diện web tương tác |
-| **BitsAndBytes** | Quantization 4-bit cho LLM |
+- Python 3.11
+- Khoảng 20 GB dung lượng trống cho môi trường và model
+- Kết nối Internet trong lần chạy đầu
+- GPU NVIDIA với ít nhất 8 GB VRAM được khuyến nghị
+- Nếu chạy CPU: nên có ít nhất 24 GB RAM và chấp nhận tốc độ chậm
 
-## **Cài đặt**
+Model Vicuna có dung lượng khoảng 13.5 GB trước khi quantization. Lần chạy đầu
+cũng tải embedding model khoảng 540 MB; các lần sau sử dụng cache của
+Hugging Face.
 
-### 1. Tạo môi trường Conda
+## Cài đặt
+
+### NVIDIA GPU
+
+Cấu hình khuyến nghị là Linux hoặc WSL2 với NVIDIA driver hoạt động bình thường.
 
 ```bash
-conda create -n aio-rag python=3.11
+git clone https://github.com/ThachPhung/Personal-Chatbot-with-RAG.git
+cd Personal-Chatbot-with-RAG
+
+conda create -n aio-rag python=3.11 -y
 conda activate aio-rag
+
+python -m pip install --upgrade pip
+python -m pip install torch==2.7.0 --index-url https://download.pytorch.org/whl/cu126
+python -m pip install -r requirements-gpu.txt
 ```
 
-### 2. Cài đặt thư viện
+Lệnh trên dùng PyTorch cho CUDA 12.6. Nếu driver yêu cầu bản CUDA khác, chọn
+lệnh tương ứng tại [PyTorch Start Locally](https://pytorch.org/get-started/locally/),
+sau đó cài `requirements-gpu.txt`.
+
+Kiểm tra CUDA trước khi chạy:
 
 ```bash
-pip install -r requirements.txt
+python -c "import torch; assert torch.cuda.is_available(), 'CUDA unavailable'; print(torch.cuda.get_device_name(0))"
 ```
 
-### 3. Cấu hình (tùy chọn)
+Lệnh phải in ra tên GPU mà không báo lỗi.
+
+### CPU hoặc macOS
 
 ```bash
-cp .env.example .env
-# Chỉnh sửa .env nếu cần
+git clone https://github.com/ThachPhung/Personal-Chatbot-with-RAG.git
+cd Personal-Chatbot-with-RAG
+
+conda create -n aio-rag python=3.11 -y
+conda activate aio-rag
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-## **Chạy ứng dụng**
+## Chạy ứng dụng
 
-### Phiên bản đơn giản (Q&A)
+Giao diện hỏi đáp đơn giản:
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
-Giao diện bao gồm:
-- Upload PDF và nhấn "Xử lý PDF"
-- Nhập câu hỏi → Nhận câu trả lời ngay lập tức
-
-### Phiên bản Chatbot (khung chat đầy đủ)
+Giao diện chatbot có lịch sử hội thoại:
 
 ```bash
-streamlit run chatbot_app.py
+python -m streamlit run chatbot_app.py
 ```
 
-Giao diện mở rộng bao gồm:
-- **Sidebar**: Upload PDF, điều khiển chat, hướng dẫn sử dụng
-- **Khung chat**: Lịch sử hội thoại liên tục
-- **Tương tác**: Đặt nhiều câu hỏi mà không cần xử lý lại PDF
+Mở <http://localhost:8501> nếu trình duyệt không tự khởi động.
 
-## **Cấu trúc dự án**
+## Cách sử dụng
 
-```
+1. Chọn một file PDF.
+2. Nhấn **Xử lý PDF** và chờ hệ thống tạo vector store.
+3. Nhập câu hỏi.
+4. Agent tự chọn trả lời trực tiếp hoặc tìm ngữ cảnh trong PDF.
+
+Vector store hiện được tạo trong bộ nhớ cho từng phiên chạy. Khởi động lại ứng
+dụng sẽ cần xử lý lại PDF.
+
+## Cấu trúc dự án
+
+```text
 Personal-Chatbot-with-RAG/
-├── src/                                    # Source modules
+├── .github/workflows/
+│   └── ci.yml
+├── notebooks/
+│   └── [Code]_Project_RAG_Chatbot.ipynb
+├── prompts/
+│   ├── classify.txt
+│   ├── direct_generate.txt
+│   └── rag_generate.txt
+├── src/
 │   ├── __init__.py
-│   ├── config.py                           # Constants (model names, params)
-│   ├── models.py                           # Embedding + LLM loading
-│   ├── pipeline.py                         # PDF processing + RAG chain
-│   └── ui.py                               # Chat UI helpers
-├── app.py                                  # Entry: Q&A đơn giản
-├── chatbot_app.py                          # Entry: Chatbot đầy đủ
-├── [Code]_Project_RAG_Chatbot.ipynb        # Notebook gốc (Colab)
-├── Personal Chatbot.pdf                    # Tài liệu hướng dẫn
-├── requirements.txt                        # Thư viện Python
-├── .env.example                            # Template biến môi trường
-├── .gitignore                              # Git ignore rules
-└── README.md                               # File này
+│   ├── agent.py
+│   ├── config.py
+│   ├── models.py
+│   ├── pipeline.py
+│   └── ui.py
+├── tests/
+│   ├── test_agent.py
+│   ├── test_config.py
+│   ├── test_models.py
+│   └── test_pipeline.py
+├── app.py
+├── chatbot_app.py
+├── pyproject.toml
+├── requirements-dev.txt
+├── requirements-gpu.txt
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
-## **Yêu cầu phần cứng**
+Repository không kèm tài liệu PDF mẫu. Người dùng upload tài liệu của mình qua
+giao diện.
 
-- **GPU mode** (khuyến nghị): NVIDIA GPU với ≥ 6GB VRAM → sử dụng quantization 4-bit
-- **CPU mode**: ≥ 16GB RAM → sử dụng bfloat16 (chậm hơn đáng kể)
+## Kiểm tra code
 
-> **Lưu ý**: Chương trình tự động phát hiện GPU. Nếu có CUDA sẽ dùng quantization 4-bit, nếu không sẽ fallback về CPU mode.
+```bash
+python -m unittest discover -s tests -v
+python -m compileall -q app.py chatbot_app.py src tests
+```
 
-## **Quy trình hoạt động**
+Để chạy formatter và linter:
 
-1. Người dùng upload file PDF
-2. Hệ thống đọc nội dung PDF và chia nhỏ văn bản bằng Semantic Chunker
-3. Các đoạn văn được chuyển thành vector embeddings và lưu vào vector database
-4. Khi người dùng đặt câu hỏi:
-    - Retriever tìm các đoạn văn liên quan
-    - LLM (Vicuna) sinh câu trả lời dựa trên context truy xuất
-5. Kết quả được hiển thị trực tiếp trên giao diện chat
+```bash
+python -m pip install -r requirements-dev.txt
+ruff format --check .
+ruff check .
+```
+
+## Xử lý lỗi thường gặp
+
+### `torch.cuda.is_available()` trả về `False`
+
+PyTorch đang dùng bản CPU hoặc NVIDIA driver chưa tương thích. Cài lại PyTorch
+theo đúng CUDA tại trang hướng dẫn chính thức rồi chạy lại bước kiểm tra CUDA.
+
+### Báo thiếu `bitsandbytes`
+
+Môi trường được cài bằng `requirements.txt` thay vì `requirements-gpu.txt`:
+
+```bash
+python -m pip install -r requirements-gpu.txt
+```
+
+### Terminal chạy nhầm Streamlit
+
+Luôn chạy qua Python của môi trường Conda:
+
+```bash
+python -m streamlit run app.py
+```
+
+## Lưu ý
+
+- Không cần API key để chạy ứng dụng.
+- Model được tải trực tiếp từ Hugging Face.
+- Vicuna 7B v1.5 sử dụng giấy phép Llama 2; cần kiểm tra điều khoản trước khi
+  triển khai thương mại.

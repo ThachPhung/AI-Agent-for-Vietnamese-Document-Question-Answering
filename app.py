@@ -6,11 +6,11 @@ from src.agent import create_agent, run_agent
 from src.models import init_model_state, load_embeddings, load_llm
 from src.pipeline import process_pdf
 
+st.set_page_config(page_title="PDF RAG Agent", layout="wide")
 init_model_state()
 
 
 def main():
-    st.set_page_config(page_title="PDF RAG Agent", layout="wide")
     st.title("🤖 PDF RAG Agent")
     st.markdown("""
     **AI Agent hỏi đáp tài liệu PDF** — tự quyết định có cần tìm kiếm

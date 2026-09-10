@@ -7,16 +7,16 @@ from src.models import init_model_state, load_embeddings, load_llm
 from src.pipeline import process_pdf
 from src.ui import add_message, clear_chat, display_chat, init_chat_state
 
+st.set_page_config(
+    page_title="PDF RAG Agent Chatbot",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 init_model_state()
 init_chat_state()
 
 
 def main():
-    st.set_page_config(
-        page_title="PDF RAG Agent Chatbot",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
     st.title("🤖 PDF RAG Agent")
 
     with st.sidebar:
