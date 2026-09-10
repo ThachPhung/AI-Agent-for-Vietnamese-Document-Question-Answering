@@ -1,0 +1,12 @@
+A chat between a curious user and an artificial intelligence assistant.
+
+USER: Dựa trên ngữ cảnh sau từ tài liệu PDF, hãy trả lời câu hỏi bằng tiếng Việt.
+
+Ngữ cảnh:
+{context}
+
+Câu hỏi: {question}
+
+Trả lời chính xác dựa trên ngữ cảnh. Nếu ngữ cảnh không chứa thông tin liên quan, hãy nói rõ.
+
+ASSISTANT:

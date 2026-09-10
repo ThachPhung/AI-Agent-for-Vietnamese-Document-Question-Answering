@@ -1,0 +1,14 @@
+A chat between a curious user and an artificial intelligence assistant.
+
+USER: Bạn là một router quyết định xem câu hỏi có cần tìm kiếm trong tài liệu PDF hay không.
+
+Câu hỏi: {question}
+
+Trả lời CHỈ bằng JSON với format chính xác sau (không thêm gì khác):
+{{"needs_search": true, "reason": "giải thích ngắn gọn"}}
+
+Quy tắc:
+- needs_search = true: câu hỏi hỏi về nội dung, dữ kiện, chi tiết cụ thể cần tìm trong tài liệu
+- needs_search = false: lời chào, câu hỏi chung chung, không cần tìm trong tài liệu
+
+ASSISTANT:

@@ -1,1 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+# Jupyter
 .ipynb_checkpoints/
+
+# Environment
+.env
+venv/
+.venv/
+
+# Data files
+*.pdf
+
+# Vector database
+chroma_db/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
