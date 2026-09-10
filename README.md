@@ -121,11 +121,6 @@ Personal-Chatbot-with-RAG/
 │   ├── models.py
 │   ├── pipeline.py
 │   └── ui.py
-├── tests/
-│   ├── test_agent.py
-│   ├── test_config.py
-│   ├── test_models.py
-│   └── test_pipeline.py
 ├── app.py
 ├── chatbot_app.py
 ├── pyproject.toml
