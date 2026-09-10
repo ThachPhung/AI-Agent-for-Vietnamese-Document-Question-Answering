@@ -134,19 +134,20 @@ Personal-Chatbot-with-RAG/
 Repository không kèm tài liệu PDF mẫu. Người dùng upload tài liệu của mình qua
 giao diện.
 
-## Kiểm tra code
+## Kiểm tra chất lượng code
 
-```bash
-python -m unittest discover -s tests -v
-python -m compileall -q app.py chatbot_app.py src tests
-```
-
-Để chạy formatter và linter:
+Cài công cụ phát triển:
 
 ```bash
 python -m pip install -r requirements-dev.txt
+```
+
+Kiểm tra format, lint và cú pháp:
+
+```bash
 ruff format --check .
 ruff check .
+python -m compileall -q app.py chatbot_app.py src
 ```
 
 ## Xử lý lỗi thường gặp
